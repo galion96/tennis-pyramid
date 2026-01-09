@@ -104,8 +104,27 @@ class TennisPyramid {
         block.appendChild(positionEl);
         block.appendChild(nameEl);
 
-        // Click to select/swap
+        // Click to select/swap (desktop)
         block.addEventListener('click', (e) => this.handleBlockClick(e, block));
+
+        // Touch to select/swap (mobile - fixes issues on some Android devices)
+        block.addEventListener('touchstart', (e) => {
+            // Don't handle if touching the name input
+            if (e.target.classList.contains('block-name')) return;
+            this.touchStartTime = Date.now();
+        }, { passive: true });
+
+        block.addEventListener('touchend', (e) => {
+            // Don't handle if touching the name input
+            if (e.target.classList.contains('block-name')) return;
+
+            // Only treat as tap if touch was quick (< 300ms)
+            const touchDuration = Date.now() - this.touchStartTime;
+            if (touchDuration < 300) {
+                e.preventDefault();
+                this.handleBlockClick(e, block);
+            }
+        });
 
         return block;
     }

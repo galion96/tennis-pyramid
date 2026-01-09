@@ -111,24 +111,68 @@ class TennisPyramid {
         block.appendChild(positionEl);
         block.appendChild(nameEl);
 
-        // Click to select/swap (desktop)
-        block.addEventListener('click', (e) => this.handleBlockClick(e, block));
+        // Long press to edit name (1 second)
+        let longPressTimer = null;
+        let isLongPress = false;
 
-        // Touch to select/swap (mobile - fixes issues on some Android devices)
+        const startLongPress = () => {
+            isLongPress = false;
+            longPressTimer = setTimeout(() => {
+                isLongPress = true;
+                this.editPlayerName(position);
+            }, 1000);
+        };
+
+        const cancelLongPress = () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        };
+
+        // Desktop: mousedown/mouseup for long press
+        block.addEventListener('mousedown', startLongPress);
+        block.addEventListener('mouseup', cancelLongPress);
+        block.addEventListener('mouseleave', cancelLongPress);
+
+        // Click to select/swap (desktop) - only if not long press
+        block.addEventListener('click', (e) => {
+            if (!isLongPress) {
+                this.handleBlockClick(e, block);
+            }
+            isLongPress = false;
+        });
+
+        // Touch: touchstart/touchend for both tap and long press
         block.addEventListener('touchstart', () => {
             this.touchStartTime = Date.now();
+            startLongPress();
         }, { passive: true });
 
         block.addEventListener('touchend', (e) => {
-            // Only treat as tap if touch was quick (< 300ms)
+            cancelLongPress();
+            // Only treat as tap if touch was quick (< 300ms) and not long press
             const touchDuration = Date.now() - this.touchStartTime;
-            if (touchDuration < 300) {
+            if (touchDuration < 300 && !isLongPress) {
                 e.preventDefault();
                 this.handleBlockClick(e, block);
             }
+            isLongPress = false;
         });
 
+        block.addEventListener('touchmove', cancelLongPress, { passive: true });
+
         return block;
+    }
+
+    editPlayerName(position) {
+        const currentName = this.players[position - 1];
+        const newName = prompt('Edit player name:', currentName);
+        if (newName !== null && newName.trim() !== '') {
+            this.players[position - 1] = newName.trim();
+            this.savePyramid();
+            this.renderPyramid();
+        }
     }
 
     // Click handler for selecting and swapping blocks

@@ -4,8 +4,8 @@ class TennisPyramid {
         this.rows = 4; // Default number of rows
         this.players = []; // Array of player names indexed by position
         this.pyramidEl = document.getElementById('pyramid');
-        this.draggedBlock = null;
-        this.draggedPosition = null;
+        this.selectedBlock = null;
+        this.selectedPosition = null;
         this.isSharing = false; // Prevent multiple share attempts
         this.contacts = this.loadContacts(); // Load saved contacts
         this.pendingImageBlob = null; // Store image for sharing
@@ -75,7 +75,6 @@ class TennisPyramid {
     createBlock(position, playerName) {
         const block = document.createElement('div');
         block.className = 'block';
-        block.draggable = true;
         block.dataset.position = position;
 
         const positionEl = document.createElement('div');
@@ -87,10 +86,6 @@ class TennisPyramid {
         nameEl.contentEditable = true;
         nameEl.textContent = playerName;
         nameEl.dataset.pos = position;
-
-        // Prevent drag when editing name
-        nameEl.addEventListener('mousedown', (e) => e.stopPropagation());
-        nameEl.addEventListener('touchstart', (e) => e.stopPropagation());
 
         // Save name on blur
         nameEl.addEventListener('blur', (e) => {
@@ -109,118 +104,42 @@ class TennisPyramid {
         block.appendChild(positionEl);
         block.appendChild(nameEl);
 
-        // Drag events
-        block.addEventListener('dragstart', (e) => this.handleDragStart(e, block));
-        block.addEventListener('dragend', (e) => this.handleDragEnd(e, block));
-        block.addEventListener('dragover', (e) => this.handleDragOver(e));
-        block.addEventListener('dragenter', (e) => this.handleDragEnter(e, block));
-        block.addEventListener('dragleave', (e) => this.handleDragLeave(e, block));
-        block.addEventListener('drop', (e) => this.handleDrop(e, block));
-
-        // Touch events for mobile
-        block.addEventListener('touchstart', (e) => this.handleTouchStart(e, block));
-        block.addEventListener('touchmove', (e) => this.handleTouchMove(e));
-        block.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+        // Click to select/swap
+        block.addEventListener('click', (e) => this.handleBlockClick(e, block));
 
         return block;
     }
 
-    // Drag handlers
-    handleDragStart(e, block) {
-        this.draggedBlock = block;
-        this.draggedPosition = parseInt(block.dataset.position);
-        block.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', block.dataset.position);
-    }
-
-    handleDragEnd(e, block) {
-        block.classList.remove('dragging');
-        this.draggedBlock = null;
-        this.draggedPosition = null;
-
-        // Remove drag-over class from all blocks
-        document.querySelectorAll('.block').forEach(b => b.classList.remove('drag-over'));
-    }
-
-    handleDragOver(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-    }
-
-    handleDragEnter(e, block) {
-        e.preventDefault();
-        if (block !== this.draggedBlock) {
-            block.classList.add('drag-over');
+    // Click handler for selecting and swapping blocks
+    handleBlockClick(e, block) {
+        // Don't handle click if user is editing the name
+        if (e.target.classList.contains('block-name') && document.activeElement === e.target) {
+            return;
         }
-    }
 
-    handleDragLeave(e, block) {
-        block.classList.remove('drag-over');
-    }
+        const clickedPosition = parseInt(block.dataset.position);
 
-    handleDrop(e, targetBlock) {
-        e.preventDefault();
-        targetBlock.classList.remove('drag-over');
-
-        if (!this.draggedBlock || targetBlock === this.draggedBlock) return;
-
-        const fromPosition = this.draggedPosition;
-        const toPosition = parseInt(targetBlock.dataset.position);
-
-        this.swapPositions(fromPosition, toPosition);
-    }
-
-    // Touch handlers for mobile
-    handleTouchStart(e, block) {
-        // Don't start drag if touching the name input
-        if (e.target.classList.contains('block-name')) return;
-
-        this.draggedBlock = block;
-        this.draggedPosition = parseInt(block.dataset.position);
-        block.classList.add('dragging');
-
-        // Store initial touch position
-        const touch = e.touches[0];
-        this.touchStartX = touch.clientX;
-        this.touchStartY = touch.clientY;
-    }
-
-    handleTouchMove(e) {
-        if (!this.draggedBlock) return;
-        e.preventDefault();
-
-        const touch = e.touches[0];
-        const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-
-        // Remove drag-over from all blocks
-        document.querySelectorAll('.block').forEach(b => b.classList.remove('drag-over'));
-
-        // Find the block element
-        const targetBlock = elementBelow?.closest('.block');
-        if (targetBlock && targetBlock !== this.draggedBlock) {
-            targetBlock.classList.add('drag-over');
-            this.touchTargetBlock = targetBlock;
+        if (this.selectedBlock === null) {
+            // First click: select this block
+            this.selectedBlock = block;
+            this.selectedPosition = clickedPosition;
+            block.classList.add('selected');
+        } else if (this.selectedBlock === block) {
+            // Clicked same block: deselect
+            this.selectedBlock.classList.remove('selected');
+            this.selectedBlock = null;
+            this.selectedPosition = null;
         } else {
-            this.touchTargetBlock = null;
-        }
-    }
+            // Second click on different block: swap
+            const fromPosition = this.selectedPosition;
+            const toPosition = clickedPosition;
 
-    handleTouchEnd(e) {
-        if (!this.draggedBlock) return;
+            this.selectedBlock.classList.remove('selected');
+            this.selectedBlock = null;
+            this.selectedPosition = null;
 
-        this.draggedBlock.classList.remove('dragging');
-
-        if (this.touchTargetBlock) {
-            this.touchTargetBlock.classList.remove('drag-over');
-            const fromPosition = this.draggedPosition;
-            const toPosition = parseInt(this.touchTargetBlock.dataset.position);
             this.swapPositions(fromPosition, toPosition);
         }
-
-        this.draggedBlock = null;
-        this.draggedPosition = null;
-        this.touchTargetBlock = null;
     }
 
     // Position swap logic

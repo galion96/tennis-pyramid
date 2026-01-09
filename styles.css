@@ -1,0 +1,453 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: linear-gradient(135deg, #1a5f2a 0%, #2d8b4e 50%, #1a5f2a 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center;
+    color: #fff;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.instructions {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 30px;
+    font-size: 1rem;
+}
+
+.pyramid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    margin-bottom: 20px;
+}
+
+.pyramid-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.block {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(145deg, #fff8dc, #f0e68c);
+    border: 3px solid #daa520;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    user-select: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.block:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.block:active {
+    cursor: grabbing;
+}
+
+.block.dragging {
+    opacity: 0.5;
+    transform: scale(1.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+}
+
+.block.drag-over {
+    background: linear-gradient(145deg, #98fb98, #90ee90);
+    border-color: #228b22;
+    transform: scale(1.08);
+}
+
+.block-position {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #8b4513;
+}
+
+.block-name {
+    font-size: 0.65rem;
+    color: #666;
+    text-align: center;
+    padding: 0 4px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.block-name:empty::before {
+    content: 'Player ' attr(data-pos);
+    color: #999;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-add {
+    background: linear-gradient(145deg, #4CAF50, #45a049);
+    color: white;
+}
+
+.btn-remove {
+    background: linear-gradient(145deg, #f44336, #da190b);
+    color: white;
+}
+
+.btn-share {
+    background: linear-gradient(145deg, #25D366, #128C7E);
+    color: white;
+}
+
+.whatsapp-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Touch device improvements */
+@media (hover: none) {
+    .block:hover {
+        transform: none;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .block.drag-over {
+        transform: scale(1.08);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    .block {
+        width: 60px;
+        height: 60px;
+    }
+
+    .block-position {
+        font-size: 1.4rem;
+    }
+
+    .block-name {
+        font-size: 0.55rem;
+    }
+
+    .btn {
+        padding: 10px 18px;
+        font-size: 0.9rem;
+    }
+
+    .pyramid {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 400px) {
+    .block {
+        width: 50px;
+        height: 50px;
+        gap: 6px;
+    }
+
+    .block-position {
+        font-size: 1.2rem;
+    }
+
+    .pyramid-row {
+        gap: 6px;
+    }
+}
+
+/* Animation for position changes */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.block.position-changed {
+    animation: pulse 0.3s ease-out;
+}
+
+/* Editable name styles */
+.block-name[contenteditable="true"] {
+    outline: none;
+    cursor: text;
+    min-width: 50px;
+}
+
+.block-name[contenteditable="true"]:focus {
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 3px;
+}
+
+/* Notification */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: opacity 0.3s;
+}
+
+.notification.fade-out {
+    opacity: 0;
+}
+
+/* Share Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modal {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal h2 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 1.3rem;
+}
+
+.modal p {
+    color: #666;
+    margin: 0 0 16px 0;
+    font-size: 0.9rem;
+}
+
+.modal-close {
+    float: right;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #999;
+    padding: 0;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.add-contact-section {
+    margin-bottom: 20px;
+}
+
+.add-contact-section label,
+.modal > label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.contact-input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.contact-input-group input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.contact-input-group input:focus {
+    outline: none;
+    border-color: #25D366;
+}
+
+.contact-input-group button {
+    padding: 10px 16px;
+    background: #25D366;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.contact-input-group button:hover {
+    background: #128C7E;
+}
+
+.contacts-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.contact-item:hover {
+    background: #e8f5e9;
+}
+
+.contact-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.contact-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.contact-phone {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.contact-delete {
+    background: none;
+    border: none;
+    color: #f44336;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px 8px;
+}
+
+.contact-delete:hover {
+    background: #ffebee;
+    border-radius: 4px;
+}
+
+.no-contacts {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+    font-style: italic;
+}
+
+.share-direct-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(145deg, #25D366, #128C7E);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+.share-direct-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+}
+
+.divider {
+    text-align: center;
+    color: #999;
+    margin: 16px 0;
+    position: relative;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: #ddd;
+}
+
+.divider::before { left: 0; }
+.divider::after { right: 0; }

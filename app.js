@@ -1,8 +1,6 @@
 // Tennis Pyramid Application
 class TennisPyramid {
     constructor() {
-        this.rows = 4; // Default number of rows
-        this.players = []; // Array of player names indexed by position
         this.pyramidEl = document.getElementById('pyramid');
         this.selectedBlock = null;
         this.selectedPosition = null;
@@ -10,8 +8,28 @@ class TennisPyramid {
         this.contacts = this.loadContacts(); // Load saved contacts
         this.pendingImageBlob = null; // Store image for sharing
 
+        // Load pyramid data from localStorage or use defaults
+        const savedPyramid = this.loadPyramid();
+        this.rows = savedPyramid.rows;
+        this.players = savedPyramid.players;
+
         this.init();
         this.setupEventListeners();
+    }
+
+    loadPyramid() {
+        const saved = localStorage.getItem('pyramidData');
+        if (saved) {
+            return JSON.parse(saved);
+        }
+        return { rows: 4, players: [] };
+    }
+
+    savePyramid() {
+        localStorage.setItem('pyramidData', JSON.stringify({
+            rows: this.rows,
+            players: this.players
+        }));
     }
 
     loadContacts() {
@@ -41,10 +59,15 @@ class TennisPyramid {
     init() {
         // Initialize players array with default names
         const totalPositions = this.getTotalPositions();
+        let needsSave = false;
         for (let i = 0; i < totalPositions; i++) {
             if (!this.players[i]) {
                 this.players[i] = `Player ${i + 1}`;
+                needsSave = true;
             }
+        }
+        if (needsSave) {
+            this.savePyramid();
         }
         this.renderPyramid();
     }
@@ -83,23 +106,7 @@ class TennisPyramid {
 
         const nameEl = document.createElement('div');
         nameEl.className = 'block-name';
-        nameEl.contentEditable = true;
         nameEl.textContent = playerName;
-        nameEl.dataset.pos = position;
-
-        // Save name on blur
-        nameEl.addEventListener('blur', (e) => {
-            const pos = parseInt(block.dataset.position);
-            this.players[pos - 1] = e.target.textContent || `Player ${pos}`;
-        });
-
-        // Prevent newlines in name
-        nameEl.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                nameEl.blur();
-            }
-        });
 
         block.appendChild(positionEl);
         block.appendChild(nameEl);
@@ -108,16 +115,11 @@ class TennisPyramid {
         block.addEventListener('click', (e) => this.handleBlockClick(e, block));
 
         // Touch to select/swap (mobile - fixes issues on some Android devices)
-        block.addEventListener('touchstart', (e) => {
-            // Don't handle if touching the name input
-            if (e.target.classList.contains('block-name')) return;
+        block.addEventListener('touchstart', () => {
             this.touchStartTime = Date.now();
         }, { passive: true });
 
         block.addEventListener('touchend', (e) => {
-            // Don't handle if touching the name input
-            if (e.target.classList.contains('block-name')) return;
-
             // Only treat as tap if touch was quick (< 300ms)
             const touchDuration = Date.now() - this.touchStartTime;
             if (touchDuration < 300) {
@@ -131,11 +133,6 @@ class TennisPyramid {
 
     // Click handler for selecting and swapping blocks
     handleBlockClick(e, block) {
-        // Don't handle click if user is editing the name
-        if (e.target.classList.contains('block-name') && document.activeElement === e.target) {
-            return;
-        }
-
         const clickedPosition = parseInt(block.dataset.position);
 
         if (this.selectedBlock === null) {
@@ -191,6 +188,7 @@ class TennisPyramid {
         }
 
         this.players = newPlayers;
+        this.savePyramid();
         this.renderPyramid();
 
         // Animate changed positions
@@ -209,6 +207,7 @@ class TennisPyramid {
             if (this.rows < 10) {
                 this.rows++;
                 this.init();
+                this.savePyramid();
             }
         });
 
@@ -219,6 +218,7 @@ class TennisPyramid {
                 // Trim players array
                 const totalPositions = this.getTotalPositions();
                 this.players = this.players.slice(0, totalPositions);
+                this.savePyramid();
                 this.renderPyramid();
             }
         });

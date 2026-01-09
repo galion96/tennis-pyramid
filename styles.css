@@ -217,16 +217,9 @@ h1 {
     animation: pulse 0.3s ease-out;
 }
 
-/* Editable name styles */
-.block-name[contenteditable="true"] {
-    outline: none;
-    cursor: text;
-    min-width: 50px;
-}
-
-.block-name[contenteditable="true"]:focus {
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: 3px;
+/* Name styles */
+.block-name {
+    pointer-events: none;
 }
 
 /* Notification */
